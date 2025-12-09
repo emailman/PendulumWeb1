@@ -24,6 +24,11 @@ const val GRAVITY = 9.81
 const val DAMPING = 0.01 // Air resistance
 const val LENGTH_METERS = 2.0 // Simulation length for physics
 
+interface AudioController {
+    fun playLeftSound()
+    fun playRightSound()
+}
+
 class PendulumState {
     var angle by mutableStateOf(PI / 4)
     var angularVelocity by mutableStateOf(0.0)
@@ -34,7 +39,7 @@ class PendulumState {
 }
 
 @Composable
-fun App() {
+fun App(audioController: AudioController? = null) {
     MaterialTheme(
         colors = darkColors(
             background = Color(0xFF121212),
@@ -65,6 +70,12 @@ fun App() {
                         // Detect peak of right swing: Velocity was positive, now zero or negative
                          if (previousVelocity > 0 && state.angularVelocity <= 0) {
                             state.maxAngle = state.angle
+                            audioController?.playRightSound()
+                        }
+
+                        // Detect peak of left swing: Velocity was negative, now zero or positive
+                        if (previousVelocity < 0 && state.angularVelocity >= 0) {
+                            audioController?.playLeftSound()
                         }
                         
                         // Detect bottom of swing: Angle sign changed (crossed zero)
