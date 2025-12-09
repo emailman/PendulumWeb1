@@ -1,0 +1,10 @@
+.gradle/
+build/
+.idea/
+.kotlin/
+kotlin-js-store/
+bin/
+out/
+*.iml
+*.lock
+local.properties
