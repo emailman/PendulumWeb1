@@ -14,7 +14,7 @@ external class AudioContext {
 
 external class AudioDestinationNode : AudioNode
 
-external open class AudioNode {
+open external class AudioNode {
     fun connect(destination: AudioNode): AudioNode
     fun connect(destination: AudioParam): Unit
 }
@@ -44,25 +44,25 @@ class WebAudioController : AudioController {
         if (audioContext.state == "suspended") {
             audioContext.resume()
         }
-        
+
         val oscillator = audioContext.createOscillator()
         val gainNode = audioContext.createGain()
-        
+
         oscillator.type = "sine"
         oscillator.frequency.value = frequency
-        
+
         // Connect: Oscillator -> Gain -> Destination
         oscillator.connect(gainNode)
         gainNode.connect(audioContext.destination)
-        
+
         oscillator.start()
-        
+
         // Ramp down gain to avoid clicking (ADSR envelope style)
         // Note: Using Double for values as per standard API, but Kotlin wrapper usually handles Number types
         gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
         // Ramp to near-zero over 0.5 seconds
         gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.5)
-        
+
         oscillator.stop(audioContext.currentTime + 0.5)
     }
 
@@ -78,7 +78,7 @@ class WebAudioController : AudioController {
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     val audioController = WebAudioController()
-    CanvasBasedWindow(title = "Pendulum App", canvasElementId = "ComposeTarget") { 
+    CanvasBasedWindow(title = "Pendulum App", canvasElementId = "ComposeTarget") {
         App(audioController)
     }
 }

@@ -1,6 +1,7 @@
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Card
 import androidx.compose.material.Text
@@ -36,6 +37,7 @@ class PendulumState {
     var isDragging by mutableStateOf(false)
     var maxAngle by mutableStateOf(0.0)
     var maxVelocity by mutableStateOf(0.0)
+    var hasUserInteracted by mutableStateOf(false)
 }
 
 @Composable
@@ -107,6 +109,7 @@ fun PendulumScreen(state: PendulumState) {
                             state.angularVelocity = 0.0
                             state.maxAngle = 0.0 // Reset max on new interaction
                             state.maxVelocity = 0.0
+                            state.hasUserInteracted = true
                         },
                         onDragEnd = { 
                             state.isDragging = false 
@@ -128,12 +131,17 @@ fun PendulumScreen(state: PendulumState) {
                             // dx is the sin component, dy is the cos component.
                             // angle = atan2(dx, dy)
                             state.angle = kotlin.math.atan2(dx, dy).toDouble()
-                            // Update max angle during drag only if we want to show current angle as max
+                            // Update max angle during drag only if we want to show the current angle as max
                             // BUT requirement says "max value for each swing", implies physics
                             // We can track the drag "peak" if desired, but let's stick to physics peaks or simple reset.
-                            // Simply updating maxAngle during drag makes it equal to current angle usually.
+                            // Simply updating maxAngle during drag makes it equal to the current angle usually.
                             state.maxAngle = state.angle
                         }
+                    )
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = { state.hasUserInteracted = true }
                     )
                 }
         ) {
@@ -213,9 +221,20 @@ fun PendulumScreen(state: PendulumState) {
 
                 Text(text = "Angle: $degreesStr°")
                 Text(text = "Max Angle: $maxDegreesStr°")
-                Text(text = "Velocity: $vStr") // Note: Monospace font recommended for true alignment but default is fine
+                Text(text = "Velocity: $vStr") // Note: Monospace font recommended for true alignment, but default is fine
                 Text(text = "Max Velocity: $maxVStr")
             }
+        }
+        
+        // Audio Hint
+        if (!state.hasUserInteracted) {
+            Text(
+                text = "Click in the window if no sound is heard",
+                color = Color.Gray,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 16.dp)
+            )
         }
     }
 }
