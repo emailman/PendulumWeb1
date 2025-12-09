@@ -1,16 +1,19 @@
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.Card
+import androidx.compose.material.Text
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.isActive
 import kotlin.math.PI
 import kotlin.math.cos
@@ -26,6 +29,8 @@ class PendulumState {
     var angularVelocity by mutableStateOf(0.0)
     var angularAcceleration by mutableStateOf(0.0)
     var isDragging by mutableStateOf(false)
+    var maxAngle by mutableStateOf(0.0)
+    var maxVelocity by mutableStateOf(0.0)
 }
 
 @Composable
@@ -47,12 +52,25 @@ fun App() {
                     lastTime = time
                     
                     if (!state.isDragging) {
+                        val previousVelocity = state.angularVelocity
+                        val previousAngle = state.angle
+                        
                         // Semi-implicit Euler Integration
                         val alpha = -(GRAVITY / LENGTH_METERS) * sin(state.angle) -
                                 DAMPING * state.angularVelocity
                         state.angularAcceleration = alpha
                         state.angularVelocity += alpha * dt
                         state.angle += state.angularVelocity * dt
+                        
+                        // Detect peak of right swing: Velocity was positive, now zero or negative
+                         if (previousVelocity > 0 && state.angularVelocity <= 0) {
+                            state.maxAngle = state.angle
+                        }
+                        
+                        // Detect bottom of swing: Angle sign changed (crossed zero)
+                        if ((previousAngle > 0 && state.angle <= 0) || (previousAngle < 0 && state.angle >= 0)) {
+                            state.maxVelocity = kotlin.math.abs(state.angularVelocity)
+                        }
                     }
                 }
             }
@@ -76,6 +94,8 @@ fun PendulumScreen(state: PendulumState) {
                         onDragStart = { 
                             state.isDragging = true
                             state.angularVelocity = 0.0
+                            state.maxAngle = 0.0 // Reset max on new interaction
+                            state.maxVelocity = 0.0
                         },
                         onDragEnd = { 
                             state.isDragging = false 
@@ -97,6 +117,11 @@ fun PendulumScreen(state: PendulumState) {
                             // dx is the sin component, dy is the cos component.
                             // angle = atan2(dx, dy)
                             state.angle = kotlin.math.atan2(dx, dy).toDouble()
+                            // Update max angle during drag only if we want to show current angle as max
+                            // BUT requirement says "max value for each swing", implies physics
+                            // We can track the drag "peak" if desired, but let's stick to physics peaks or simple reset.
+                            // Simply updating maxAngle during drag makes it equal to current angle usually.
+                            state.maxAngle = state.angle
                         }
                     )
                 }
@@ -135,6 +160,51 @@ fun PendulumScreen(state: PendulumState) {
                 radius = bobRadius,
                 center = bobPos
             )
+        }
+        
+        // Status Overlay
+        Card(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp),
+            elevation = 4.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                // Convert radians to degrees for display
+                val degrees = (state.angle * 180 / PI).toInt()
+                // Format to 3-place integer (e.g. " 45", "123")
+                val degreesStr = degrees.toString().padStart(3, ' ')
+
+                // Format Velocity to 5.2f (e.g. " 1.23")
+                // KMP workaround for String.format
+                val v = state.angularVelocity
+                val vSign = if (v < 0) "-" else " "
+                val vAbs = kotlin.math.abs(v)
+                val vInt = vAbs.toInt()
+                val vDec = ((vAbs - vInt) * 100).toInt()
+                // e.g. " 1.23" (length 5)
+                val vStrRaw = "$vSign$vInt.${vDec.toString().padStart(2, '0')}"
+                val vStr = vStrRaw.padStart(5, ' ')
+
+                // Format Max Angle
+                val maxDegrees = (state.maxAngle * 180 / PI).toInt()
+                val maxDegreesStr = maxDegrees.toString().padStart(3, ' ')
+
+                // Format Max Velocity
+                val maxV = state.maxVelocity
+                val maxVInt = maxV.toInt()
+                val maxVDec = ((maxV - maxVInt) * 100).toInt()
+                // e.g. " 1.23" (length 5) - Max Velocity is always positive
+                val maxVStrRaw = " $maxVInt.${maxVDec.toString().padStart(2, '0')}"
+                val maxVStr = maxVStrRaw.padStart(5, ' ')
+
+                Text(text = "Angle: $degreesStr°")
+                Text(text = "Max Angle: $maxDegreesStr°")
+                Text(text = "Velocity: $vStr") // Note: Monospace font recommended for true alignment but default is fine
+                Text(text = "Max Velocity: $maxVStr")
+            }
         }
     }
 }
