@@ -135,6 +135,7 @@ fun PendulumScreen(state: PendulumState) {
                             // dx is the sin component, dy is the cos component.
                             // angle = atan2(dx, dy)
                             state.angle = kotlin.math.atan2(dx, dy).toDouble()
+
                             // Update max angle during drag only if we want to show
                             // the current angle as max.
                             // Requirement says "max value for each swing", implies physics
