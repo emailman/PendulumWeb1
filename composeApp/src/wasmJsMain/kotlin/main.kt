@@ -16,7 +16,6 @@ external class AudioDestinationNode : AudioNode
 
 open external class AudioNode {
     fun connect(destination: AudioNode): AudioNode
-    fun connect(destination: AudioParam): Unit
 }
 
 external class OscillatorNode : AudioNode {
@@ -58,10 +57,13 @@ class WebAudioController : AudioController {
         oscillator.start()
 
         // Ramp down gain to avoid clicking (ADSR envelope style)
-        // Note: Using Double for values as per standard API, but Kotlin wrapper usually handles Number types
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
+        // Note: Using Double for values as per standard API,
+        // but Kotlin wrapper usually handles Number types
+        gainNode.gain.setValueAtTime(0.1,
+            audioContext.currentTime)
         // Ramp to near-zero over 0.5 seconds
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.5)
+        gainNode.gain.exponentialRampToValueAtTime(0.0001,
+            audioContext.currentTime + 0.5)
 
         oscillator.stop(audioContext.currentTime + 0.5)
     }
