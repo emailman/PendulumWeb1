@@ -69,19 +69,22 @@ fun App(audioController: AudioController? = null) {
                         state.angularVelocity += alpha * dt
                         state.angle += state.angularVelocity * dt
                         
-                        // Detect peak of right swing: Velocity was positive, now zero or negative
+                        // Detect peak of right swing
+                        // Velocity was positive, now zero or negative
                          if (previousVelocity > 0 && state.angularVelocity <= 0) {
                             state.maxAngle = state.angle
                             audioController?.playRightSound()
                         }
 
-                        // Detect peak of left swing: Velocity was negative, now zero or positive
+                        // Detect peak of left swing
+                        // Velocity was negative, now zero or positive
                         if (previousVelocity < 0 && state.angularVelocity >= 0) {
                             audioController?.playLeftSound()
                         }
                         
                         // Detect bottom of swing: Angle sign changed (crossed zero)
-                        if ((previousAngle > 0 && state.angle <= 0) || (previousAngle < 0 && state.angle >= 0)) {
+                        if ((previousAngle > 0 && state.angle <= 0) ||
+                            (previousAngle < 0 && state.angle >= 0)) {
                             state.maxVelocity = kotlin.math.abs(state.angularVelocity)
                         }
                     }
@@ -120,21 +123,25 @@ fun PendulumScreen(state: PendulumState) {
                         onDrag = { change, _ ->
                             // Calculate a new angle based on touch position relative to pivot
                             // (center of screen)
-                            val center = Offset(size.width / 2f, size.height / 3f) // Pivot point
+                            val center = Offset(size.width / 2f,
+                                size.height / 3f) // Pivot point
                             val touch = change.position
                             val dx = touch.x - center.x
                             val dy = touch.y - center.y
                             
                             // atan2(x, y) gives angle from vertical down if we treat y as down
                             // standard atan2(y, x) is from x axis.
-                            // Pendulum angle 0 is vertical down.
+                            // Pendulum angle 0 is vertically down.
                             // dx is the sin component, dy is the cos component.
                             // angle = atan2(dx, dy)
                             state.angle = kotlin.math.atan2(dx, dy).toDouble()
-                            // Update max angle during drag only if we want to show the current angle as max
-                            // BUT requirement says "max value for each swing", implies physics
-                            // We can track the drag "peak" if desired, but let's stick to physics peaks or simple reset.
-                            // Simply updating maxAngle during drag makes it equal to the current angle usually.
+                            // Update max angle during drag only if we want to show
+                            // the current angle as max.
+                            // Requirement says "max value for each swing", implies physics
+                            // We can track the drag "peak" if desired,
+                            // but let's stick to physics peaks or simple reset.
+                            // Simply updating maxAngle during drag makes
+                            // it equal to the current angle usually.
                             state.maxAngle = state.angle
                         }
                     )
@@ -172,7 +179,8 @@ fun PendulumScreen(state: PendulumState) {
             val bobRadius = 40f
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(Color(0xFF00E5FF), Color(0xFF008299)), // Neon Cyan
+                    colors = listOf(Color(0xFF00E5FF),
+                        Color(0xFF008299)), // Neon Cyan
                     center = bobPos,
                     radius = bobRadius
                 ),
